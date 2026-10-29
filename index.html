@@ -8,99 +8,26 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg: #0b0f19;
-      --card-bg: #111827;
-      --border: #1f2937;
-      --text: #f9fafb;
-      --text-muted: #9ca3af;
-      --accent: #38bdf8;
-      --fire: #f97316;
+      --bg: #0b0f19; --card-bg: #111827; --border: #1f2937;
+      --text: #f9fafb; --text-muted: #9ca3af; --accent: #38bdf8; --fire: #f97316;
     }
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      margin: 0;
-      padding: 24px;
-      background: var(--bg);
-      color: var(--text);
-    }
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-    .header {
-      margin-bottom: 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-    }
-    .stat-label {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .stat-val {
-      font-size: 1.6rem;
-      font-weight: 700;
-      margin-top: 6px;
-      color: var(--accent);
-    }
-    .fire-text {
-      color: var(--fire);
-    }
-    .chart-container {
-      position: relative;
-      height: 320px;
-    }
-    input, button {
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 0.95rem;
-    }
-    button {
-      background: #2563eb;
-      cursor: pointer;
-      border: none;
-      font-weight: 600;
-      transition: background 0.2s;
-    }
-    button:hover {
-      background: #1d4ed8;
-    }
-    #auth-section {
-      max-width: 400px;
-      margin: 80px auto;
-      text-align: center;
-    }
-    #dashboard-section {
-      display: none;
-    }
-    .badge {
-      background: rgba(249, 115, 22, 0.15);
-      color: #fb923c;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 24px; background: var(--bg); color: var(--text); }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-val { font-size: 1.6rem; font-weight: 700; margin-top: 6px; color: var(--accent); }
+    .fire-text { color: var(--fire); }
+    .chart-container { position: relative; height: 320px; }
+    .chart-container-large { position: relative; height: 400px; }
+    input, button { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.95rem; }
+    button { background: #2563eb; cursor: pointer; border: none; font-weight: 600; transition: background 0.2s; }
+    button:hover { background: #1d4ed8; }
+    #auth-section { max-width: 400px; margin: 80px auto; text-align: center; }
+    #dashboard-section { display: none; }
+    .badge { background: rgba(249, 115, 22, 0.15); color: #fb923c; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -112,13 +39,7 @@
       <p style="color: var(--text-muted); font-size: 0.9rem;">Sign in to access your accounts and pension profile.</p>
       <input type="email" id="email" value="brian.sullivan34@gmail.com" style="width: 85%; margin-bottom: 12px;" />
       <br />
-      <input 
-        type="password" 
-        id="password" 
-        placeholder="Enter password" 
-        onkeydown="if (event.key === 'Enter') handleLogin()" 
-        style="width: 85%; margin-bottom: 16px;" 
-      />
+      <input type="password" id="password" placeholder="Enter password" onkeydown="if (event.key === 'Enter') handleLogin()" style="width: 85%; margin-bottom: 16px;" />
       <br />
       <button id="login-btn" onclick="handleLogin()" style="width: 85%;">Sign In</button>
       <p id="auth-message" style="margin-top: 14px; font-size: 0.9rem; color: #f87171; min-height: 1.2em;"></p>
@@ -158,194 +79,184 @@
 
       <div class="grid" style="grid-template-columns: 2fr 1fr;">
         <div class="card">
-          <div class="stat-label" style="margin-bottom: 16px;">Top Monarch Account Balances</div>
+          <div class="stat-label" style="margin-bottom: 16px;">Top Current Account Balances</div>
           <div class="chart-container"><canvas id="barChart"></canvas></div>
         </div>
         <div class="card">
-          <div class="stat-label" style="margin-bottom: 16px;">Total Wealth (Assets + Pension NPV)</div>
+          <div class="stat-label" style="margin-bottom: 16px;">Current Wealth Allocation</div>
           <div class="chart-container"><canvas id="donutChart"></canvas></div>
         </div>
       </div>
-    </div>
 
+      <!-- Combined Historical & Future Projections -->
+      <div class="grid" style="grid-template-columns: 1fr;">
+        <div class="card">
+          <div class="stat-label" style="margin-bottom: 16px;">Net Worth Timeline (Historical Data + 10-Year Forward Projection)</div>
+          <div class="chart-container-large"><canvas id="timelineChart"></canvas></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
     const SUPABASE_URL = "https://vcirhauxowshpvztnowi.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaXJoYXV4b3dzaHB2enRub3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMTQ5ODYsImV4cCI6MjEwODc5MDk4Nn0.PvYykAPZyl5R6XSCu0DY87Qc2AsON32gRHqXKjp34LI"; // <-- PASTE YOUR SUPABASE ANON PUBLIC KEY HERE
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaXJoYXV4b3dzaHB2enRub3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMTQ5ODYsImV4cCI6MjEwODc5MDk4Nn0.PvYykAPZyl5R6XSCu0DY87Qc2AsON32gRHqXKjp34LI"; // <-- PASTE KEY HERE
 
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- Loudoun County Fire & VRS Plan 2 Parameters ---
     const HIRE_DATE = new Date("2010-04-10");
     const MULTIPLIER = 0.0185;
     const BASE_SALARY_2026 = 205004.80;
-    const GROWTH_RATE = 0.02;
+    const SALARY_GROWTH_RATE = 0.02;
     const HAZARDOUS_SUPPLEMENT = 1650.00;
+    const LIQUID_GROWTH_RATE = 0.06;
 
-    // Calculates 60-Month Consecutive AFC (Plan 2) for any retirement target year
+    // Calculates AFC for ANY given year (past or future)
     function calculateAFC(targetYear) {
       let sum = 0;
       for (let i = 0; i < 5; i++) {
         const year = targetYear - i;
-        const salary = BASE_SALARY_2026 * Math.pow(1 + GROWTH_RATE, year - 2026);
+        const salary = BASE_SALARY_2026 * Math.pow(1 + SALARY_GROWTH_RATE, year - 2026);
         sum += salary;
       }
       return sum / 5;
     }
 
+    // Calculates Pension NPV for ANY given date
+    function calculatePensionNPV(targetDate) {
+      const serviceYears = Math.max(0, (targetDate - HIRE_DATE) / (1000 * 60 * 60 * 24 * 365.25));
+      const afc = calculateAFC(targetDate.getFullYear());
+      let monthly = (serviceYears * MULTIPLIER * afc) / 12;
+      if (serviceYears >= 20) monthly += HAZARDOUS_SUPPLEMENT;
+      return (monthly * 12) / 0.04;
+    }
+
     async function handleLogin() {
-      const emailEl = document.getElementById("email");
-      const passwordEl = document.getElementById("password");
-      const btn = document.getElementById("login-btn");
-      const msg = document.getElementById("auth-message");
-
+      const emailEl = document.getElementById("email"), passwordEl = document.getElementById("password"), btn = document.getElementById("login-btn"), msg = document.getElementById("auth-message");
       if (!emailEl || !passwordEl) return;
-
       if (btn) btn.innerText = "Connecting...";
-      if (msg) msg.innerText = "";
-
-      const email = emailEl.value.trim();
-      const password = passwordEl.value;
-
-      if (!password) {
-        if (msg) msg.innerText = "Please enter your password.";
-        if (btn) btn.innerText = "Sign In";
-        return;
-      }
-
-      const { data, error } = await client.auth.signInWithPassword({ email, password });
-
-      if (error) {
-        if (msg) msg.innerText = error.message;
-        if (btn) btn.innerText = "Sign In";
-      } else {
-        if (msg) {
-          msg.style.color = "#34d399";
-          msg.innerText = "Success! Loading dashboard...";
-        }
-        document.getElementById("auth-section").style.display = "none";
-        document.getElementById("dashboard-section").style.display = "block";
-        renderDashboard();
-      }
+      const { error } = await client.auth.signInWithPassword({ email: emailEl.value.trim(), password: passwordEl.value });
+      if (error) { if (msg) msg.innerText = error.message; if (btn) btn.innerText = "Sign In"; } 
+      else { location.reload(); }
     }
-
-    async function handleLogout() {
-      await client.auth.signOut();
-      location.reload();
-    }
-
+    async function handleLogout() { await client.auth.signOut(); location.reload(); }
     const fmt = (v) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
 
-    let barChartInstance = null;
-    let donutChartInstance = null;
+    let bChart, dChart, tChart;
 
     async function renderDashboard() {
-      // Find the most recent snapshot date so balances do not double upon multiple sync runs
-      const { data: latestRow } = await client
-        .from("account_snapshots")
-        .select("date")
-        .order("date", { ascending: false })
-        .limit(1);
+      // Fetch all historical data
+      const { data: allData } = await client.from("account_snapshots").select("date, account_name, account_type, current_balance").order("date", { ascending: true });
 
-      const latestDate = latestRow && latestRow.length > 0 ? latestRow[0].date : null;
+      // Group liquid history by date
+      const liquidHistory = {};
+      const latestAccounts = {};
+      let latestDate = "1970-01-01";
 
-      let query = client.from("account_snapshots").select("account_name, account_type, current_balance");
-      if (latestDate) {
-        query = query.eq("date", latestDate);
-      }
-      const { data: accounts } = await query.order("current_balance", { ascending: false });
+      (allData || []).forEach(row => {
+        const bal = parseFloat(row.current_balance) || 0;
+        liquidHistory[row.date] = (liquidHistory[row.date] || 0) + bal;
+        if (row.date > latestDate) latestDate = row.date;
+      });
+
+      // Extract current breakdown
+      let currentLiquid = 0;
+      const breakdown = {};
+      const topAccounts = [];
+      (allData || []).forEach(row => {
+        if (row.date === latestDate) {
+          const bal = parseFloat(row.current_balance) || 0;
+          currentLiquid += bal;
+          breakdown[row.account_type || "other"] = (breakdown[row.account_type || "other"] || 0) + bal;
+          topAccounts.push({ name: row.account_name, bal: bal });
+        }
+      });
+      topAccounts.sort((a, b) => b.bal - a.bal);
 
       const now = new Date();
       const currentServiceYears = (now - HIRE_DATE) / (1000 * 60 * 60 * 24 * 365.25);
+      const currentNPV = calculatePensionNPV(now);
+      const currentMonthly = (currentNPV * 0.04) / 12;
 
-      // Pension Calculations
-      const currentAFC = calculateAFC(now.getFullYear());
-      const currentMonthly = (currentServiceYears * MULTIPLIER * currentAFC) / 12;
-      const currentNPV = (currentMonthly * 12) / 0.04;
+      const monthly20yr = ((20 * MULTIPLIER * calculateAFC(2030)) / 12) + HAZARDOUS_SUPPLEMENT;
+      const monthly25yr = ((25 * MULTIPLIER * calculateAFC(2035)) / 12) + HAZARDOUS_SUPPLEMENT;
 
-      const afc2030 = calculateAFC(2030);
-      const monthly20yr = ((20 * MULTIPLIER * afc2030) / 12) + HAZARDOUS_SUPPLEMENT;
+      breakdown["Accrued Pension NPV"] = currentNPV;
 
-      const afc2035 = calculateAFC(2035);
-      const monthly25yr = ((25 * MULTIPLIER * afc2035) / 12) + HAZARDOUS_SUPPLEMENT;
-
-      // Group Accounts by Type & Liquid Balances
-      let liquid = 0;
-      const breakdown = { "Accrued Pension NPV": currentNPV };
-      (accounts || []).forEach(a => {
-        const bal = parseFloat(a.current_balance) || 0;
-        liquid += bal;
-        const type = a.account_type || "other";
-        breakdown[type] = (breakdown[type] || 0) + bal;
-      });
-
-      document.getElementById("total-liquid").innerText = fmt(liquid);
+      document.getElementById("total-liquid").innerText = fmt(currentLiquid);
       document.getElementById("current-pension").innerText = `${fmt(currentMonthly)} / mo`;
       document.getElementById("service-years").innerText = `${currentServiceYears.toFixed(1)} Yrs Service Credit`;
       document.getElementById("pension-20yr").innerText = `${fmt(monthly20yr)} / mo`;
       document.getElementById("pension-25yr").innerText = `${fmt(monthly25yr)} / mo`;
 
-      // Chart 1: Bar Chart (Top 8 Accounts)
-      const top8 = (accounts || []).slice(0, 8);
-      if (barChartInstance) barChartInstance.destroy();
-      barChartInstance = new Chart(document.getElementById("barChart"), {
+      Chart.defaults.color = "#9ca3af";
+
+      if (bChart) bChart.destroy();
+      bChart = new Chart(document.getElementById("barChart"), {
         type: "bar",
-        data: {
-          labels: top8.map(a => a.account_name),
-          datasets: [{
-            data: top8.map(a => a.current_balance),
-            backgroundColor: "#38bdf8",
-            borderRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { ticks: { color: "#9ca3af" }, grid: { display: false } },
-            y: { ticks: { color: "#9ca3af" }, grid: { color: "#1f2937" } }
-          }
-        }
+        data: { labels: topAccounts.slice(0, 8).map(a => a.name), datasets: [{ data: topAccounts.slice(0, 8).map(a => a.bal), backgroundColor: "#38bdf8", borderRadius: 4 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: "#1f2937" } } } }
       });
 
-      // Chart 2: Donut Chart (Asset Allocation + Pension NPV)
-      if (donutChartInstance) donutChartInstance.destroy();
-      donutChartInstance = new Chart(document.getElementById("donutChart"), {
+      if (dChart) dChart.destroy();
+      dChart = new Chart(document.getElementById("donutChart"), {
         type: "doughnut",
+        data: { labels: Object.keys(breakdown), datasets: [{ data: Object.values(breakdown), backgroundColor: ["#f97316", "#38bdf8", "#818cf8", "#34d399", "#fbbf24", "#f87171", "#a78bfa"], borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "right" } } }
+      });
+
+      // --- TIMELINE CHART (History + Future) ---
+      const timeLabels = [];
+      const hLiquidData = [];
+      const hPensionData = [];
+      const hTotalData = [];
+
+      // Add Historical Points
+      Object.keys(liquidHistory).sort().forEach(dateString => {
+        const dObj = new Date(dateString);
+        timeLabels.push(dateString.substring(0, 7)); // YYYY-MM
+        const liq = liquidHistory[dateString];
+        const pen = calculatePensionNPV(dObj);
+        hLiquidData.push(liq);
+        hPensionData.push(pen);
+        hTotalData.push(liq + pen);
+      });
+
+      // Add Projection Points (1, 3, 5, 7, 10 Years out)
+      const projYears = [1, 3, 5, 7, 10];
+      projYears.forEach(yearsOut => {
+        const targetDate = new Date(now.getFullYear() + yearsOut, now.getMonth(), 1);
+        timeLabels.push(`Projected ${targetDate.getFullYear()}`);
+        
+        const futureLiquid = currentLiquid * Math.pow(1 + LIQUID_GROWTH_RATE, yearsOut);
+        const futurePension = calculatePensionNPV(targetDate);
+        
+        hLiquidData.push(futureLiquid);
+        hPensionData.push(futurePension);
+        hTotalData.push(futureLiquid + futurePension);
+      });
+
+      if (tChart) tChart.destroy();
+      tChart = new Chart(document.getElementById("timelineChart"), {
+        type: "line",
         data: {
-          labels: Object.keys(breakdown),
-          datasets: [{
-            data: Object.values(breakdown),
-            backgroundColor: ["#f97316", "#38bdf8", "#818cf8", "#34d399", "#fbbf24", "#f87171", "#a78bfa"]
-          }]
+          labels: timeLabels,
+          datasets: [
+            { label: "Combined Net Worth", data: hTotalData, borderColor: "#4ade80", backgroundColor: "rgba(74, 222, 128, 0.1)", fill: true, tension: 0.3, borderWidth: 3 },
+            { label: "Liquid Assets", data: hLiquidData, borderColor: "#38bdf8", borderDash: [4, 4], tension: 0.3 },
+            { label: "Pension Capitalized (NPV)", data: hPensionData, borderColor: "#f97316", borderDash: [4, 4], tension: 0.3 }
+          ]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: "bottom", labels: { color: "#9ca3af", boxWidth: 12 } }
-          }
+          responsive: true, maintainAspectRatio: false,
+          plugins: { tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + fmt(c.raw); } } } },
+          scales: { x: { grid: { display: false } }, y: { grid: { color: "#1f2937" }, ticks: { callback: function(val) { return '$' + (val/1000).toFixed(0) + 'k'; } } } }
         }
       });
     }
 
-    // Auto-login on active session
     client.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        document.getElementById("auth-section").style.display = "none";
-        document.getElementById("dashboard-section").style.display = "block";
-        renderDashboard();
-      }
-    });
-
-    client.auth.onAuthStateChange((_, session) => {
-      if (session) {
-        document.getElementById("auth-section").style.display = "none";
-        document.getElementById("dashboard-section").style.display = "block";
-        renderDashboard();
-      }
+      if (session) { document.getElementById("auth-section").style.display = "none"; document.getElementById("dashboard-section").style.display = "block"; renderDashboard(); }
     });
   </script>
 </body>
