@@ -8,8 +8,16 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg: #0b0f19; --card-bg: #111827; --border: #1f2937;
-      --text: #f9fafb; --text-muted: #9ca3af; --accent: #38bdf8; --fire: #f97316;
+      --bg: #0b0f19;
+      --card-bg: #111827;
+      --border: #1f2937;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+      --accent: #38bdf8;
+      --fire: #f97316;
+    }
+    * {
+      box-sizing: border-box;
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -18,29 +26,90 @@
       background: var(--bg);
       color: var(--text);
     }
-    .container { max-width: 1100px; margin: 0 auto; }
-    .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-    .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .stat-val { font-size: 1.6rem; font-weight: 700; margin-top: 6px; color: var(--accent); }
-    .fire-text { color: var(--fire); }
-    .chart-container { position: relative; height: 320px; }
-    input, button { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
-    button { background: #2563eb; cursor: pointer; border: none; font-weight: 600; }
-    button:hover { background: #1d4ed8; }
-    #auth-section { max-width: 400px; margin: 80px auto; text-align: center; }
-    #dashboard-section { display: none; }
-    .badge { background: rgba(249, 115, 22, 0.15); color: #fb923c; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .stat-val {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-top: 6px;
+      color: var(--accent);
+    }
+    .fire-text {
+      color: var(--fire);
+    }
+    .chart-container {
+      position: relative;
+      height: 320px;
+    }
+    input, button {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    button {
+      background: #2563eb;
+      cursor: pointer;
+      border: none;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    #auth-section {
+      max-width: 400px;
+      margin: 80px auto;
+      text-align: center;
+    }
+    #dashboard-section {
+      display: none;
+    }
+    .badge {
+      background: rgba(249, 115, 22, 0.15);
+      color: #fb923c;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
   <div class="container">
 
-<!-- Auth View -->
+    <!-- Auth View -->
     <div id="auth-section" class="card">
       <h2 style="margin-top: 0;">Financial Dashboard</h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem;">Sign in to access your dashboard.</p>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Sign in to access your accounts and pension profile.</p>
       <input type="email" id="email" value="brian.sullivan34@gmail.com" style="width: 85%; margin-bottom: 12px;" />
       <br />
       <input 
@@ -51,7 +120,7 @@
         style="width: 85%; margin-bottom: 16px;" 
       />
       <br />
-      <button id="login-btn" onclick="handleLogin()" style="width: 90%;">Sign In</button>
+      <button id="login-btn" onclick="handleLogin()" style="width: 85%;">Sign In</button>
       <p id="auth-message" style="margin-top: 14px; font-size: 0.9rem; color: #f87171; min-height: 1.2em;"></p>
     </div>
 
@@ -60,7 +129,7 @@
       <div class="header">
         <div>
           <h1 style="margin: 0 0 6px 0;">Financial Overview</h1>
-          <span class="badge">Loudoun Fire & Rescue • VRS Plan 2 Hazardous (1.85%, 60-Mo AFC, 2% Compounding)</span>
+          <span class="badge">Loudoun Fire & Rescue • VRS Plan 2 Hazardous (1.85%, 60-Mo AFC, 2% Growth)</span>
         </div>
         <button onclick="handleLogout()" style="background: #374151;">Sign Out</button>
       </div>
@@ -103,16 +172,18 @@
 
   <script>
     const SUPABASE_URL = "https://vcirhauxowshpvztnowi.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaXJoYXV4b3dzaHB2enRub3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMTQ5ODYsImV4cCI6MjEwODc5MDk4Nn0.PvYykAPZyl5R6XSCu0DY87Qc2AsON32gRHqXKjp34LI"; // <-- PASTE YOUR ANON KEY HERE
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaXJoYXV4b3dzaHB2enRub3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMTQ5ODYsImV4cCI6MjEwODc5MDk4Nn0.PvYykAPZyl5R6XSCu0DY87Qc2AsON32gRHqXKjp34LI"; // <-- PASTE YOUR SUPABASE ANON PUBLIC KEY HERE
+
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- Loudoun Fire & VRS Parameters ---
+    // --- Loudoun County Fire & VRS Plan 2 Parameters ---
     const HIRE_DATE = new Date("2010-04-10");
     const MULTIPLIER = 0.0185;
     const BASE_SALARY_2026 = 205004.80;
     const GROWTH_RATE = 0.02;
     const HAZARDOUS_SUPPLEMENT = 1650.00;
 
+    // Calculates 60-Month Consecutive AFC (Plan 2) for any retirement target year
     function calculateAFC(targetYear) {
       let sum = 0;
       for (let i = 0; i < 5; i++) {
@@ -124,12 +195,38 @@
     }
 
     async function handleLogin() {
-      const email = document.getElementById("brian.sullivan34@gmail.com").value;
-      const password = document.getElementById("Chillum1!").value;
-      const { error } = await client.auth.signInWithPassword({ email, password });
-      
+      const emailEl = document.getElementById("email");
+      const passwordEl = document.getElementById("password");
+      const btn = document.getElementById("login-btn");
+      const msg = document.getElementById("auth-message");
+
+      if (!emailEl || !passwordEl) return;
+
+      if (btn) btn.innerText = "Connecting...";
+      if (msg) msg.innerText = "";
+
+      const email = emailEl.value.trim();
+      const password = passwordEl.value;
+
+      if (!password) {
+        if (msg) msg.innerText = "Please enter your password.";
+        if (btn) btn.innerText = "Sign In";
+        return;
+      }
+
+      const { data, error } = await client.auth.signInWithPassword({ email, password });
+
       if (error) {
-        document.getElementById("auth-message").innerText = error.message;
+        if (msg) msg.innerText = error.message;
+        if (btn) btn.innerText = "Sign In";
+      } else {
+        if (msg) {
+          msg.style.color = "#34d399";
+          msg.innerText = "Success! Loading dashboard...";
+        }
+        document.getElementById("auth-section").style.display = "none";
+        document.getElementById("dashboard-section").style.display = "block";
+        renderDashboard();
       }
     }
 
@@ -140,16 +237,29 @@
 
     const fmt = (v) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
 
+    let barChartInstance = null;
+    let donutChartInstance = null;
+
     async function renderDashboard() {
-      const { data: accounts } = await client
+      // Find the most recent snapshot date so balances do not double upon multiple sync runs
+      const { data: latestRow } = await client
         .from("account_snapshots")
-        .select("account_name, account_type, current_balance")
-        .order("current_balance", { ascending: false });
+        .select("date")
+        .order("date", { ascending: false })
+        .limit(1);
+
+      const latestDate = latestRow && latestRow.length > 0 ? latestRow[0].date : null;
+
+      let query = client.from("account_snapshots").select("account_name, account_type, current_balance");
+      if (latestDate) {
+        query = query.eq("date", latestDate);
+      }
+      const { data: accounts } = await query.order("current_balance", { ascending: false });
 
       const now = new Date();
       const currentServiceYears = (now - HIRE_DATE) / (1000 * 60 * 60 * 24 * 365.25);
 
-      // Calculations
+      // Pension Calculations
       const currentAFC = calculateAFC(now.getFullYear());
       const currentMonthly = (currentServiceYears * MULTIPLIER * currentAFC) / 12;
       const currentNPV = (currentMonthly * 12) / 0.04;
@@ -160,12 +270,14 @@
       const afc2035 = calculateAFC(2035);
       const monthly25yr = ((25 * MULTIPLIER * afc2035) / 12) + HAZARDOUS_SUPPLEMENT;
 
+      // Group Accounts by Type & Liquid Balances
       let liquid = 0;
       const breakdown = { "Accrued Pension NPV": currentNPV };
       (accounts || []).forEach(a => {
-        const bal = parseFloat(a.current_balance);
+        const bal = parseFloat(a.current_balance) || 0;
         liquid += bal;
-        breakdown[a.account_type || "other"] = (breakdown[a.account_type || "other"] || 0) + bal;
+        const type = a.account_type || "other";
+        breakdown[type] = (breakdown[type] || 0) + bal;
       });
 
       document.getElementById("total-liquid").innerText = fmt(liquid);
@@ -174,12 +286,18 @@
       document.getElementById("pension-20yr").innerText = `${fmt(monthly20yr)} / mo`;
       document.getElementById("pension-25yr").innerText = `${fmt(monthly25yr)} / mo`;
 
+      // Chart 1: Bar Chart (Top 8 Accounts)
       const top8 = (accounts || []).slice(0, 8);
-      new Chart(document.getElementById("barChart"), {
+      if (barChartInstance) barChartInstance.destroy();
+      barChartInstance = new Chart(document.getElementById("barChart"), {
         type: "bar",
         data: {
           labels: top8.map(a => a.account_name),
-          datasets: [{ data: top8.map(a => a.current_balance), backgroundColor: "#38bdf8", borderRadius: 6 }]
+          datasets: [{
+            data: top8.map(a => a.current_balance),
+            backgroundColor: "#38bdf8",
+            borderRadius: 6
+          }]
         },
         options: {
           responsive: true,
@@ -192,13 +310,15 @@
         }
       });
 
-      new Chart(document.getElementById("donutChart"), {
+      // Chart 2: Donut Chart (Asset Allocation + Pension NPV)
+      if (donutChartInstance) donutChartInstance.destroy();
+      donutChartInstance = new Chart(document.getElementById("donutChart"), {
         type: "doughnut",
         data: {
           labels: Object.keys(breakdown),
           datasets: [{
             data: Object.values(breakdown),
-            backgroundColor: ["#f97316", "#38bdf8", "#818cf8", "#34d399", "#fbbf24", "#f87171"]
+            backgroundColor: ["#f97316", "#38bdf8", "#818cf8", "#34d399", "#fbbf24", "#f87171", "#a78bfa"]
           }]
         },
         options: {
@@ -211,7 +331,8 @@
       });
     }
 
-    client.auth.onAuthStateChange((_, session) => {
+    // Auto-login on active session
+    client.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         document.getElementById("auth-section").style.display = "none";
         document.getElementById("dashboard-section").style.display = "block";
@@ -219,7 +340,7 @@
       }
     });
 
-    client.auth.getSession().then(({ data: { session } }) => {
+    client.auth.onAuthStateChange((_, session) => {
       if (session) {
         document.getElementById("auth-section").style.display = "none";
         document.getElementById("dashboard-section").style.display = "block";
