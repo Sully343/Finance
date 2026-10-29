@@ -37,16 +37,22 @@
 <body>
   <div class="container">
 
-    <!-- Auth View (Direct Password Sign-in) -->
+<!-- Auth View -->
     <div id="auth-section" class="card">
       <h2 style="margin-top: 0;">Financial Dashboard</h2>
       <p style="color: var(--text-muted); font-size: 0.9rem;">Sign in to access your dashboard.</p>
       <input type="email" id="email" value="brian.sullivan34@gmail.com" style="width: 85%; margin-bottom: 12px;" />
       <br />
-      <input type="password" id="password" placeholder="Enter password" style="width: 85%; margin-bottom: 16px;" />
+      <input 
+        type="password" 
+        id="password" 
+        placeholder="Enter password" 
+        onkeydown="if (event.key === 'Enter') handleLogin()" 
+        style="width: 85%; margin-bottom: 16px;" 
+      />
       <br />
-      <button onclick="handleLogin()" style="width: 90%;">Sign In</button>
-      <p id="auth-message" style="margin-top: 14px; font-size: 0.9rem; color: #f87171;"></p>
+      <button id="login-btn" onclick="handleLogin()" style="width: 90%;">Sign In</button>
+      <p id="auth-message" style="margin-top: 14px; font-size: 0.9rem; color: #f87171; min-height: 1.2em;"></p>
     </div>
 
     <!-- Live Dashboard View -->
