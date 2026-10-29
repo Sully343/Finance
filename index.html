@@ -23,7 +23,7 @@
     .chart-container { position: relative; height: 320px; }
     .chart-container-large { position: relative; height: 400px; }
     input, button { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.95rem; }
-    button { background: #2563eb; cursor: pointer; border: none; font-weight: 600; transition: background 0.2s; }
+    button { background: #2563eb; cursor: pointer; border: none; font-weight: 600; }
     button:hover { background: #1d4ed8; }
     #auth-section { max-width: 400px; margin: 80px auto; text-align: center; }
     #dashboard-section { display: none; }
@@ -36,7 +36,7 @@
     <!-- Auth View -->
     <div id="auth-section" class="card">
       <h2 style="margin-top: 0;">Financial Dashboard</h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem;">Sign in to access your accounts and pension profile.</p>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Sign in to access your accounts.</p>
       <input type="email" id="email" value="brian.sullivan34@gmail.com" style="width: 85%; margin-bottom: 12px;" />
       <br />
       <input type="password" id="password" placeholder="Enter password" onkeydown="if (event.key === 'Enter') handleLogin()" style="width: 85%; margin-bottom: 16px;" />
@@ -50,14 +50,14 @@
       <div class="header">
         <div>
           <h1 style="margin: 0 0 6px 0;">Financial Overview</h1>
-          <span class="badge">Loudoun Fire & Rescue • VRS Plan 2 Hazardous (1.85%, 60-Mo AFC, 2% Growth)</span>
+          <span class="badge">Loudoun Fire & Rescue • VRS Plan 2 Hazardous (1.85%, 60-Mo AFC)</span>
         </div>
         <button onclick="handleLogout()" style="background: #374151;">Sign Out</button>
       </div>
 
       <div class="grid">
         <div class="card">
-          <div class="stat-label">Liquid Net Worth (Monarch)</div>
+          <div class="stat-label">Actual Liquid Net Worth (Monarch)</div>
           <div class="stat-val" id="total-liquid">$0</div>
         </div>
         <div class="card">
@@ -79,19 +79,18 @@
 
       <div class="grid" style="grid-template-columns: 2fr 1fr;">
         <div class="card">
-          <div class="stat-label" style="margin-bottom: 16px;">Top Current Account Balances</div>
+          <div class="stat-label" style="margin-bottom: 16px;">Top Asset Accounts</div>
           <div class="chart-container"><canvas id="barChart"></canvas></div>
         </div>
         <div class="card">
-          <div class="stat-label" style="margin-bottom: 16px;">Current Wealth Allocation</div>
+          <div class="stat-label" style="margin-bottom: 16px;">Monarch Asset Allocation</div>
           <div class="chart-container"><canvas id="donutChart"></canvas></div>
         </div>
       </div>
 
-      <!-- Combined Historical & Future Projections -->
       <div class="grid" style="grid-template-columns: 1fr;">
         <div class="card">
-          <div class="stat-label" style="margin-bottom: 16px;">Net Worth Timeline (Historical Data + 10-Year Forward Projection)</div>
+          <div class="stat-label" style="margin-bottom: 16px;">Quarterly Net Worth & Projections</div>
           <div class="chart-container-large"><canvas id="timelineChart"></canvas></div>
         </div>
       </div>
@@ -111,18 +110,14 @@
     const HAZARDOUS_SUPPLEMENT = 1650.00;
     const LIQUID_GROWTH_RATE = 0.06;
 
-    // Calculates AFC for ANY given year (past or future)
     function calculateAFC(targetYear) {
       let sum = 0;
       for (let i = 0; i < 5; i++) {
-        const year = targetYear - i;
-        const salary = BASE_SALARY_2026 * Math.pow(1 + SALARY_GROWTH_RATE, year - 2026);
-        sum += salary;
+        sum += BASE_SALARY_2026 * Math.pow(1 + SALARY_GROWTH_RATE, (targetYear - i) - 2026);
       }
       return sum / 5;
     }
 
-    // Calculates Pension NPV for ANY given date
     function calculatePensionNPV(targetDate) {
       const serviceYears = Math.max(0, (targetDate - HIRE_DATE) / (1000 * 60 * 60 * 24 * 365.25));
       const afc = calculateAFC(targetDate.getFullYear());
@@ -134,9 +129,9 @@
     async function handleLogin() {
       const emailEl = document.getElementById("email"), passwordEl = document.getElementById("password"), btn = document.getElementById("login-btn"), msg = document.getElementById("auth-message");
       if (!emailEl || !passwordEl) return;
-      if (btn) btn.innerText = "Connecting...";
+      btn.innerText = "Connecting...";
       const { error } = await client.auth.signInWithPassword({ email: emailEl.value.trim(), password: passwordEl.value });
-      if (error) { if (msg) msg.innerText = error.message; if (btn) btn.innerText = "Sign In"; } 
+      if (error) { msg.innerText = error.message; btn.innerText = "Sign In"; } 
       else { location.reload(); }
     }
     async function handleLogout() { await client.auth.signOut(); location.reload(); }
@@ -145,43 +140,37 @@
     let bChart, dChart, tChart;
 
     async function renderDashboard() {
-      // Fetch all historical data
       const { data: allData } = await client.from("account_snapshots").select("date, account_name, account_type, current_balance").order("date", { ascending: true });
 
-      // Group liquid history by date
-      const liquidHistory = {};
-      const latestAccounts = {};
-      let latestDate = "1970-01-01";
-
+      // 1. Calculate True Current Balances (Latest snapshot per individual account)
+      const latestPerAccount = {};
       (allData || []).forEach(row => {
-        const bal = parseFloat(row.current_balance) || 0;
-        liquidHistory[row.date] = (liquidHistory[row.date] || 0) + bal;
-        if (row.date > latestDate) latestDate = row.date;
-      });
-
-      // Extract current breakdown
-      let currentLiquid = 0;
-      const breakdown = {};
-      const topAccounts = [];
-      (allData || []).forEach(row => {
-        if (row.date === latestDate) {
-          const bal = parseFloat(row.current_balance) || 0;
-          currentLiquid += bal;
-          breakdown[row.account_type || "other"] = (breakdown[row.account_type || "other"] || 0) + bal;
-          topAccounts.push({ name: row.account_name, bal: bal });
+        const acc = row.account_name;
+        if (!latestPerAccount[acc] || row.date >= latestPerAccount[acc].date) {
+          latestPerAccount[acc] = row;
         }
       });
-      topAccounts.sort((a, b) => b.bal - a.bal);
 
+      let currentLiquid = 0;
+      const breakdown = {};
+      const topAssets = [];
+
+      Object.values(latestPerAccount).forEach(row => {
+        const bal = parseFloat(row.current_balance) || 0;
+        currentLiquid += bal;
+        const type = row.account_type || "other";
+        breakdown[type] = (breakdown[type] || 0) + bal;
+        if (bal > 0) topAssets.push({ name: row.account_name, bal: bal });
+      });
+      topAssets.sort((a, b) => b.bal - a.bal);
+
+      // Pension Metrics
       const now = new Date();
       const currentServiceYears = (now - HIRE_DATE) / (1000 * 60 * 60 * 24 * 365.25);
       const currentNPV = calculatePensionNPV(now);
       const currentMonthly = (currentNPV * 0.04) / 12;
-
       const monthly20yr = ((20 * MULTIPLIER * calculateAFC(2030)) / 12) + HAZARDOUS_SUPPLEMENT;
       const monthly25yr = ((25 * MULTIPLIER * calculateAFC(2035)) / 12) + HAZARDOUS_SUPPLEMENT;
-
-      breakdown["Accrued Pension NPV"] = currentNPV;
 
       document.getElementById("total-liquid").innerText = fmt(currentLiquid);
       document.getElementById("current-pension").innerText = `${fmt(currentMonthly)} / mo`;
@@ -191,66 +180,88 @@
 
       Chart.defaults.color = "#9ca3af";
 
+      // Bar Chart: Top Assets Only
       if (bChart) bChart.destroy();
       bChart = new Chart(document.getElementById("barChart"), {
         type: "bar",
-        data: { labels: topAccounts.slice(0, 8).map(a => a.name), datasets: [{ data: topAccounts.slice(0, 8).map(a => a.bal), backgroundColor: "#38bdf8", borderRadius: 4 }] },
+        data: { labels: topAssets.slice(0, 8).map(a => a.name), datasets: [{ data: topAssets.slice(0, 8).map(a => a.bal), backgroundColor: "#38bdf8", borderRadius: 4 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: "#1f2937" } } } }
       });
 
+      // Donut Chart: Asset Allocation
       if (dChart) dChart.destroy();
       dChart = new Chart(document.getElementById("donutChart"), {
         type: "doughnut",
-        data: { labels: Object.keys(breakdown), datasets: [{ data: Object.values(breakdown), backgroundColor: ["#f97316", "#38bdf8", "#818cf8", "#34d399", "#fbbf24", "#f87171", "#a78bfa"], borderWidth: 0 }] },
+        data: { labels: Object.keys(breakdown), datasets: [{ data: Object.values(breakdown).map(v => Math.max(0, v)), backgroundColor: ["#38bdf8", "#818cf8", "#34d399", "#fbbf24", "#f87171", "#a78bfa"], borderWidth: 0 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "right" } } }
       });
 
-      // --- TIMELINE CHART (History + Future) ---
-      const timeLabels = [];
-      const hLiquidData = [];
-      const hPensionData = [];
-      const hTotalData = [];
+      // 2. Quarterly Aggregation (End of Q1, Q2, Q3, Q4)
+      const quarters = [];
+      const startYear = 2023;
+      const currentYear = now.getFullYear();
 
-      // Add Historical Points
-      Object.keys(liquidHistory).sort().forEach(dateString => {
-        const dObj = new Date(dateString);
-        timeLabels.push(dateString.substring(0, 7)); // YYYY-MM
-        const liq = liquidHistory[dateString];
-        const pen = calculatePensionNPV(dObj);
-        hLiquidData.push(liq);
-        hPensionData.push(pen);
-        hTotalData.push(liq + pen);
+      for (let y = startYear; y <= currentYear; y++) {
+        quarters.push({ label: `${y} Q1`, end: `${y}-03-31` });
+        quarters.push({ label: `${y} Q2`, end: `${y}-06-30` });
+        quarters.push({ label: `${y} Q3`, end: `${y}-09-30` });
+        quarters.push({ label: `${y} Q4`, end: `${y}-12-31` });
+      }
+
+      const qLabels = [];
+      const qLiquidData = [];
+      const qPensionData = [];
+      const qCombinedData = [];
+
+      quarters.forEach(q => {
+        if (q.end <= now.toISOString().split("T")[0]) {
+          const accsAtDate = {};
+          (allData || []).forEach(row => {
+            if (row.date <= q.end) {
+              if (!accsAtDate[row.account_name] || row.date > accsAtDate[row.account_name].date) {
+                accsAtDate[row.account_name] = row;
+              }
+            }
+          });
+
+          const totalAtQ = Object.values(accsAtDate).reduce((sum, r) => sum + (parseFloat(r.current_balance) || 0), 0);
+          if (totalAtQ !== 0) {
+            const penNPV = calculatePensionNPV(new Date(q.end));
+            qLabels.push(q.label);
+            qLiquidData.push(totalAtQ);
+            qPensionData.push(penNPV);
+            qCombinedData.push(totalAtQ + penNPV);
+          }
+        }
       });
 
-      // Add Projection Points (1, 3, 5, 7, 10 Years out)
-      const projYears = [1, 3, 5, 7, 10];
-      projYears.forEach(yearsOut => {
-        const targetDate = new Date(now.getFullYear() + yearsOut, now.getMonth(), 1);
-        timeLabels.push(`Projected ${targetDate.getFullYear()}`);
-        
-        const futureLiquid = currentLiquid * Math.pow(1 + LIQUID_GROWTH_RATE, yearsOut);
-        const futurePension = calculatePensionNPV(targetDate);
-        
-        hLiquidData.push(futureLiquid);
-        hPensionData.push(futurePension);
-        hTotalData.push(futureLiquid + futurePension);
+      // Forward Projections (1, 3, 5, 7, 10 Years out)
+      [1, 3, 5, 7, 10].forEach(yrs => {
+        const targetYear = currentYear + yrs;
+        const targetDate = new Date(targetYear, now.getMonth(), 1);
+        qLabels.push(`Projected ${targetYear}`);
+        const fLiquid = currentLiquid * Math.pow(1 + LIQUID_GROWTH_RATE, yrs);
+        const fPension = calculatePensionNPV(targetDate);
+        qLiquidData.push(fLiquid);
+        qPensionData.push(fPension);
+        qCombinedData.push(fLiquid + fPension);
       });
 
       if (tChart) tChart.destroy();
       tChart = new Chart(document.getElementById("timelineChart"), {
         type: "line",
         data: {
-          labels: timeLabels,
+          labels: qLabels,
           datasets: [
-            { label: "Combined Net Worth", data: hTotalData, borderColor: "#4ade80", backgroundColor: "rgba(74, 222, 128, 0.1)", fill: true, tension: 0.3, borderWidth: 3 },
-            { label: "Liquid Assets", data: hLiquidData, borderColor: "#38bdf8", borderDash: [4, 4], tension: 0.3 },
-            { label: "Pension Capitalized (NPV)", data: hPensionData, borderColor: "#f97316", borderDash: [4, 4], tension: 0.3 }
+            { label: "Monarch Net Worth (Actual)", data: qLiquidData, borderColor: "#38bdf8", tension: 0.3, borderWidth: 3 },
+            { label: "Combined (+ Pension NPV)", data: qCombinedData, borderColor: "#4ade80", borderDash: [4, 4], tension: 0.3 },
+            { label: "Pension NPV", data: qPensionData, borderColor: "#f97316", borderDash: [4, 4], tension: 0.3 }
           ]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + fmt(c.raw); } } } },
-          scales: { x: { grid: { display: false } }, y: { grid: { color: "#1f2937" }, ticks: { callback: function(val) { return '$' + (val/1000).toFixed(0) + 'k'; } } } }
+          plugins: { tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.raw)}` } } },
+          scales: { x: { grid: { display: false } }, y: { grid: { color: "#1f2937" }, ticks: { callback: (v) => '$' + (v/1000).toFixed(0) + 'k' } } }
         }
       });
     }
