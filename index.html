@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Net Worth & Asset Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #111827;
+      --border: #1f2937;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+      --accent: #38bdf8;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .container { max-width: 1000px; margin: 0 auto; }
+    .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .stat-label { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-val { font-size: 1.8rem; font-weight: 700; margin-top: 6px; color: var(--accent); }
+    .chart-container { position: relative; height: 350px; }
+    input, button { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+    button { background: #2563eb; cursor: pointer; border: none; font-weight: 600; }
+    button:hover { background: #1d4ed8; }
+    #auth-section { max-width: 400px; margin: 80px auto; text-align: center; }
+    #dashboard-section { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Auth View -->
+    <div id="auth-section" class="card">
+      <h2>Financial Dashboard</h2>
+      <p style="color: var(--text-muted);">Enter your email to receive a secure login link.</p>
+      <input type="email" id="email" placeholder="brian.sullivan34@gmail.com" style="width: 80%; margin-bottom: 12px;" />
+      <br />
+      <button onclick="handleLogin()">Send Magic Link</button>
+      <p id="auth-message" style="margin-top: 14px; font-size: 0.9rem;"></p>
+    </div>
+
+    <!-- Live Dashboard View -->
+    <div id="dashboard-section">
+      <div class="header">
+        <h1>Overview</h1>
+        <button onclick="handleLogout()" style="background: #374151;">Sign Out</button>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="stat-label">Total Net Worth</div>
+          <div class="stat-val" id="total-net-worth">$0.00</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Total Investments</div>
+          <div class="stat-val" id="total-investments">$0.00</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Liquid Cash</div>
+          <div class="stat-val" id="total-cash">$0.00</div>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns: 2fr 1fr;">
+        <div class="card">
+          <div class="stat-label" style="margin-bottom: 16px;">Top Balances by Account</div>
+          <div class="chart-container">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="stat-label" style="margin-bottom: 16px;">Asset Allocation</div>
+          <div class="chart-container">
+            <canvas id="donutChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://vcirhauxowshpvztnowi.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; // <-- PASTE YOUR ANON KEY HERE
+
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function handleLogin() {
+      const email = document.getElementById("email").value;
+      const { error } = await client.auth.signInWithOtp({ 
+        email,
+        options: { emailRedirectTo: window.location.href }
+      });
+      document.getElementById("auth-message").innerText = error ? error.message : "Magic link sent! Check your inbox.";
+    }
+
+    async function handleLogout() {
+      await client.auth.signOut();
+      location.reload();
+    }
+
+    function formatCurrency(val) {
+      return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val);
+    }
+
+    async function renderDashboard() {
+      const { data: accounts, error } = await client
+        .from("account_snapshots")
+        .select("account_name, account_type, current_balance")
+        .order("current_balance", { ascending: false });
+
+      if (error || !accounts) return;
+
+      // Aggregations
+      let netWorth = 0;
+      let totalInvest = 0;
+      let totalCash = 0;
+      const typeBreakdown = {};
+
+      accounts.forEach(acc => {
+        const bal = parseFloat(acc.current_balance);
+        const type = acc.account_type || "other";
+
+        netWorth += bal;
+        if (type.includes("invest") || type.includes("brokerage")) totalInvest += bal;
+        if (type.includes("depository") || type.includes("cash") || type.includes("checking") || type.includes("savings")) totalCash += bal;
+
+        typeBreakdown[type] = (typeBreakdown[type] || 0) + bal;
+      });
+
+      document.getElementById("total-net-worth").innerText = formatCurrency(netWorth);
+      document.getElementById("total-investments").innerText = formatCurrency(totalInvest);
+      document.getElementById("total-cash").innerText = formatCurrency(totalCash);
+
+      // Top 8 Accounts Bar Chart
+      const top8 = accounts.slice(0, 8);
+      new Chart(document.getElementById("barChart"), {
+        type: "bar",
+        data: {
+          labels: top8.map(a => a.account_name),
+          datasets: [{
+            data: top8.map(a => a.current_balance),
+            backgroundColor: "#38bdf8",
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: "#9ca3af" }, grid: { display: false } },
+            y: { ticks: { color: "#9ca3af" }, grid: { color: "#1f2937" } }
+          }
+        }
+      });
+
+      // Asset Allocation Donut Chart
+      new Chart(document.getElementById("donutChart"), {
+        type: "doughnut",
+        data: {
+          labels: Object.keys(typeBreakdown),
+          datasets: [{
+            data: Object.values(typeBreakdown),
+            backgroundColor: ["#38bdf8", "#818cf8", "#34d399", "#fbbf24", "#f87171"]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "bottom", labels: { color: "#9ca3af", boxWidth: 12 } }
+          }
+        }
+      });
+    }
+
+    // Check auth session
+    client.auth.onAuthStateChange((_, session) => {
+      if (session) {
+        document.getElementById("auth-section").style.display = "none";
+        document.getElementById("dashboard-section").style.display = "block";
+        renderDashboard();
+      }
+    });
+
+    client.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        document.getElementById("auth-section").style.display = "none";
+        document.getElementById("dashboard-section").style.display = "block";
+        renderDashboard();
+      }
+    });
+  </script>
+</body>
+</html>
