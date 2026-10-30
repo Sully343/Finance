@@ -15,12 +15,12 @@
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 24px; background: var(--bg); color: var(--text); }
     .container { max-width: 1200px; margin: 0 auto; }
     .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
     .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
     .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
     .stat-val { font-size: 1.5rem; font-weight: 700; margin-top: 6px; color: var(--accent); }
     .fire-text { color: var(--fire); }
-    .chart-box { position: relative; height: 360px; }
+    .chart-box { position: relative; height: 380px; }
     input, button { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.95rem; }
     button { background: #2563eb; cursor: pointer; border: none; font-weight: 600; }
     button:hover { background: #1d4ed8; }
@@ -54,12 +54,12 @@
         <button onclick="handleLogout()" style="background: #374151;">Sign Out</button>
       </div>
 
-      <!-- 6-Metric KPI Summary Row -->
+      <!-- 5-Metric KPI Row -->
       <div class="grid">
         <div class="card">
           <div class="stat-label">Monarch Net Worth</div>
           <div class="stat-val" id="total-liquid">$0</div>
-          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Liquid + Real Estate</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Liquid + Real Estate + Vehicles</div>
         </div>
         <div class="card">
           <div class="stat-label">Accrued Pension</div>
@@ -67,14 +67,9 @@
           <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;" id="service-years">0.0 Yrs Service</div>
         </div>
         <div class="card">
-          <div class="stat-label">20-Year (Apr 2030)</div>
-          <div class="stat-val" style="color: #fbbf24;" id="pension-20yr">$0 / mo</div>
-          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">+$1,650/mo Supplement</div>
-        </div>
-        <div class="card">
-          <div class="stat-label">25-Year Full Ret.</div>
+          <div class="stat-label">25-Year Full Ret. (Apr 2035)</div>
           <div class="stat-val" style="color: #4ade80;" id="pension-25yr">$0 / mo</div>
-          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Unreduced Benefit</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Unreduced + Supplement</div>
         </div>
         <div class="card">
           <div class="stat-label">Monthly Burn Rate</div>
@@ -84,15 +79,15 @@
         <div class="card">
           <div class="stat-label">Pension Coverage</div>
           <div class="stat-val" style="color: #38bdf8;" id="pension-coverage">0%</div>
-          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">20-Yr Benefit / Burn Rate</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">25-Yr Benefit / Burn Rate</div>
         </div>
       </div>
 
       <!-- Tactical Quarterly Balance Sheet -->
       <div class="grid" style="grid-template-columns: 1fr;">
         <div class="card">
-          <div class="stat-label" style="margin-bottom: 4px;">Tactical Balance Sheet (Quarterly Stacked Breakdown)</div>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 16px 0;">Assets stack upward; mortgages/liabilities hang below zero. Trendline tracks true quarterly net worth.</p>
+          <div class="stat-label" style="margin-bottom: 4px;">Tactical Balance Sheet (Quarterly Breakdown)</div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 16px 0;">Assets stack upward; mortgages/debt hang below zero. Cyan line tracks Monarch net worth; Orange dotted line adds Accrued Pension NPV.</p>
           <div class="chart-box"><canvas id="quarterlyChart"></canvas></div>
         </div>
       </div>
@@ -100,8 +95,8 @@
       <!-- Macro Projections Horizon -->
       <div class="grid" style="grid-template-columns: 1fr;">
         <div class="card">
-          <div class="stat-label" style="margin-bottom: 4px;">Long-Term Wealth Horizon (Actuals + Dynamic 10-Year Projections)</div>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 16px 0;" id="projection-subtitle">Forward model uses 6% compounding plus dynamic trailing annual surplus.</p>
+          <div class="stat-label" style="margin-bottom: 4px;">Long-Term Wealth Horizon (Annual Actuals + 10-Year Projections to 2036)</div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 16px 0;" id="projection-subtitle">Forward model compounds assets at 6% plus dynamic annual savings surplus.</p>
           <div class="chart-box"><canvas id="yearlyChart"></canvas></div>
         </div>
       </div>
@@ -134,16 +129,46 @@
       const serviceYears = Math.max(0, (targetDate - HIRE_DATE) / (1000 * 60 * 60 * 24 * 365.25));
       const afc = calculateAFC(targetDate.getFullYear());
       let monthly = (serviceYears * MULTIPLIER * afc) / 12;
-      if (serviceYears >= 20) monthly += HAZARDOUS_SUPPLEMENT;
+      // Supplement unlocks strictly at 25 years of service
+      if (serviceYears >= 25) monthly += HAZARDOUS_SUPPLEMENT;
       return (monthly * 12) / 0.04;
     }
 
-    function categorizeAccount(type, name) {
-      const t = (type || "").toLowerCase(), n = (name || "").toLowerCase();
-      if (t.includes("loan") || t.includes("mortgage") || t.includes("credit") || t.includes("debt") || n.includes("mortgage")) return "Liabilities";
-      if (t.includes("real_estate") || t.includes("property") || t.includes("asset") || n.includes("zillow") || n.includes("home")) return "Real Estate";
-      if (t.includes("invest") || t.includes("brokerage") || t.includes("retirement") || n.includes("457") || n.includes("ira") || n.includes("edge")) return "Investments & 457";
-      return "Cash & Liquid";
+    function categorizeAccount(name, balance) {
+      const n = (name || "").toLowerCase();
+      const val = parseFloat(balance) || 0;
+
+      if (val < 0 || n.includes("mortgage") || n.includes("loan") || n.includes("credit card") || n.includes("debt") || n.includes("equity") || n.includes("pennymac") || n.includes("cooper") || n.includes("card")) {
+        return "Liabilities";
+      }
+      const startsWithNumber = /^\d+/.test(n.trim());
+      if (n.includes("zillow") || n.includes("golf view") || n.includes("home") || n.includes("house") || n.includes("property") || startsWithNumber || n.includes("ram") || n.includes("laramie") || n.includes("car") || n.includes("vehicle")) {
+        return "Real Estate";
+      }
+      if (n.includes("checking") || n.includes("savings") || n.includes("cash") || n.includes("hysa") || n.includes("money market") || n.includes("prime share") || n.includes("adv plus") || n.includes("pi bank")) {
+        return "Cash & Liquid";
+      }
+      return "Investments & 457";
+    }
+
+    // Auto-paginating helper to load full history past 1,000 rows
+    async function fetchAllSnapshots() {
+      let records = [];
+      let from = 0;
+      const step = 1000;
+      while (true) {
+        const { data, error } = await client
+          .from("account_snapshots")
+          .select("date, account_name, account_type, current_balance")
+          .order("date", { ascending: true })
+          .range(from, from + step - 1);
+        
+        if (error || !data || data.length === 0) break;
+        records = records.concat(data);
+        if (data.length < step) break;
+        from += step;
+      }
+      return records;
     }
 
     async function handleLogin() {
@@ -160,15 +185,14 @@
     let quarterlyChartInstance, yearlyChartInstance;
 
     async function renderDashboard() {
-      const [snapshotsRes, cashflowRes] = await Promise.all([
-        client.from("account_snapshots").select("date, account_name, account_type, current_balance").order("date", { ascending: true }),
-        client.from("monthly_cashflow").select("month, income, expenses, savings").order("month", { ascending: true })
+      const [allData, cashflowRes] = await Promise.all([
+        fetchAllSnapshots(),
+        client.from("monthly_cashflow").select("month, income, expenses, savings").order("month", { ascending: true }).limit(500)
       ]);
 
-      const allData = snapshotsRes.data || [];
       const cashflowData = cashflowRes.data || [];
 
-      // Latest known balance per account
+      // Determine true latest snapshot per account
       const latestPerAccount = {};
       allData.forEach(row => {
         const acc = row.account_name;
@@ -186,36 +210,36 @@
       const currentNPV = calculatePensionNPV(now);
       const currentMonthly = (currentNPV * 0.04) / 12;
 
-      const monthly20yr = ((20 * MULTIPLIER * calculateAFC(2030)) / 12) + HAZARDOUS_SUPPLEMENT;
+      // Unreduced 25-Year Benefit + Supplement (April 2035)
       const monthly25yr = ((25 * MULTIPLIER * calculateAFC(2035)) / 12) + HAZARDOUS_SUPPLEMENT;
 
       // Trailing 12-month metrics
       const trailing12 = cashflowData.slice(-12);
       const avgMonthlyExpenses = trailing12.length ? trailing12.reduce((s, r) => s + parseFloat(r.expenses), 0) / trailing12.length : 0;
       const actualAnnualSavings = trailing12.length ? trailing12.reduce((s, r) => s + parseFloat(r.savings), 0) : 23500;
-      const coverageRatio = avgMonthlyExpenses > 0 ? (monthly20yr / avgMonthlyExpenses) * 100 : 0;
+      const coverageRatio = avgMonthlyExpenses > 0 ? (monthly25yr / avgMonthlyExpenses) * 100 : 0;
 
       document.getElementById("total-liquid").innerText = fmt(currentNetWorth);
       document.getElementById("current-pension").innerText = `${fmt(currentMonthly)} / mo`;
       document.getElementById("service-years").innerText = `${currentServiceYears.toFixed(1)} Yrs Service`;
-      document.getElementById("pension-20yr").innerText = `${fmt(monthly20yr)} / mo`;
       document.getElementById("pension-25yr").innerText = `${fmt(monthly25yr)} / mo`;
       document.getElementById("monthly-burn").innerText = avgMonthlyExpenses > 0 ? `${fmt(avgMonthlyExpenses)} / mo` : "$0 / mo";
       document.getElementById("pension-coverage").innerText = coverageRatio > 0 ? `${coverageRatio.toFixed(0)}%` : "N/A";
-      document.getElementById("projection-subtitle").innerText = `Forward model uses 6% compounding + dynamic ${fmt(actualAnnualSavings)}/yr actual net annual surplus.`;
+      document.getElementById("projection-subtitle").innerText = `Forward model uses 6% compounding + dynamic ${fmt(actualAnnualSavings)}/yr net annual surplus.`;
 
       Chart.defaults.color = "#9ca3af";
 
-      // 1. Tactical Quarterly Stacked Bar + Line
+      // 1. Tactical Quarterly Breakdown
       const quarters = [];
       for (let y = 2024; y <= currentYear; y++) {
         quarters.push({ label: `${y} Q1`, end: `${y}-03-31` }, { label: `${y} Q2`, end: `${y}-06-30` }, { label: `${y} Q3`, end: `${y}-09-30` }, { label: `${y} Q4`, end: `${y}-12-31` });
       }
 
-      const qLabels = [], stackCash = [], stackInvestments = [], stackRealEstate = [], stackLiabilities = [], qNetWorthLine = [];
+      const qLabels = [], stackCash = [], stackInvestments = [], stackRealEstate = [], stackLiabilities = [];
+      const qNetWorthLine = [], qCombinedLine = [];
 
       quarters.forEach(q => {
-        if (q.end <= now.toISOString().split("T")[0]) {
+        if (q.end <= now.toISOString().split("T")[0] || q.label === `${currentYear} Q4`) {
           const accsAtDate = {};
           allData.forEach(row => {
             if (row.date <= q.end && (!accsAtDate[row.account_name] || row.date > accsAtDate[row.account_name].date)) {
@@ -227,13 +251,16 @@
             let cash = 0, invest = 0, re = 0, liab = 0, nw = 0;
             Object.values(accsAtDate).forEach(r => {
               const val = parseFloat(r.current_balance) || 0;
-              const cat = categorizeAccount(r.account_type, r.account_name);
+              const cat = categorizeAccount(r.account_name, val);
               nw += val;
+
               if (cat === "Liabilities") liab += (val > 0 ? -val : val);
               else if (cat === "Real Estate") re += val;
               else if (cat === "Investments & 457") invest += val;
               else cash += val;
             });
+
+            const penNPV = calculatePensionNPV(new Date(q.end));
 
             qLabels.push(q.label);
             stackRealEstate.push(re);
@@ -241,6 +268,7 @@
             stackCash.push(cash);
             stackLiabilities.push(liab);
             qNetWorthLine.push(nw);
+            qCombinedLine.push(nw + penNPV);
           }
         }
       });
@@ -250,21 +278,25 @@
         data: {
           labels: qLabels,
           datasets: [
-            { type: "line", label: "Actual Net Worth", data: qNetWorthLine, borderColor: "#38bdf8", borderWidth: 3, tension: 0.2, order: 1 },
-            { type: "bar", label: "Real Estate (Zillow)", data: stackRealEstate, backgroundColor: "#a78bfa", stack: "balance", order: 2 },
-            { type: "bar", label: "Investments & 457(b)", data: stackInvestments, backgroundColor: "#34d399", stack: "balance", order: 3 },
-            { type: "bar", label: "Cash & Liquid", data: stackCash, backgroundColor: "#60a5fa", stack: "balance", order: 4 },
-            { type: "bar", label: "Mortgage & Liabilities", data: stackLiabilities, backgroundColor: "#f87171", stack: "balance", order: 5 }
+            { type: "line", label: "Monarch Net Worth", data: qNetWorthLine, borderColor: "#38bdf8", borderWidth: 3, tension: 0.2, order: 1 },
+            { type: "line", label: "Combined (+ Pension NPV)", data: qCombinedLine, borderColor: "#f97316", borderDash: [4, 4], borderWidth: 2, tension: 0.2, order: 2 },
+            { type: "bar", label: "Real Estate & Vehicles", data: stackRealEstate, backgroundColor: "#a78bfa", stack: "balance", order: 3 },
+            { type: "bar", label: "Investments & 457(b)", data: stackInvestments, backgroundColor: "#34d399", stack: "balance", order: 4 },
+            { type: "bar", label: "Cash & Liquid", data: stackCash, backgroundColor: "#60a5fa", stack: "balance", order: 5 },
+            { type: "bar", label: "Mortgage & Liabilities", data: stackLiabilities, backgroundColor: "#f87171", stack: "balance", order: 6 }
           ]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, grid: { color: "#1f2937" }, ticks: { callback: (v) => "$" + (v / 1000).toFixed(0) + "k" } } },
+          scales: {
+            x: { stacked: true, grid: { display: false } },
+            y: { stacked: true, grid: { color: "#1f2937" }, ticks: { callback: (v) => "$" + (v / 1000).toFixed(0) + "k" } }
+          },
           plugins: { tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.raw)}` } } }
         }
       });
 
-      // 2. Macro Annual Projections to 2036
+      // 2. Macro Projections Horizon
       const yLabels = ["2023", "2024", "2025", "2026 (Now)"];
       const yLiquid = [], yPension = [], yCombined = [];
 
@@ -297,7 +329,7 @@
         lastYear = futYear;
 
         const penNPV = calculatePensionNPV(new Date(futYear, 3, 10));
-        yLabels.push(`${futYear}${futYear === 2030 ? " (20-Yr Supp)" : futYear === 2035 ? " (25-Yr Ret)" : ""}`);
+        yLabels.push(`${futYear}${futYear === 2035 ? " (25-Yr Ret)" : ""}`);
         yLiquid.push(runningLiquid);
         yPension.push(penNPV);
         yCombined.push(runningLiquid + penNPV);
