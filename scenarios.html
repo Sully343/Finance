@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scenario Decision Simulator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f19; --card-bg: #111827; --border: #1f2937;
+      --text: #f9fafb; --text-muted: #9ca3af; --accent: #38bdf8; --fire: #f97316; --green: #4ade80;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 24px; background: var(--bg); color: var(--text); }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+    .nav-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    .nav-link:hover { text-decoration: underline; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 24px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 22px; }
+    .tabs { display: flex; gap: 12px; margin-bottom: 20px; }
+    .tab-btn { background: #1f2937; border: 1px solid var(--border); color: var(--text-muted); padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .tab-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .control-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
+    .slider-row { display: flex; justify-content: space-between; align-items: center; }
+    input[type="range"] { width: 70%; accent-color: #38bdf8; }
+    .val-disp { font-weight: 700; color: var(--accent); }
+    .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-val { font-size: 1.5rem; font-weight: 700; margin-top: 4px; }
+    .chart-box { position: relative; height: 350px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.9rem; }
+    th, td { padding: 10px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1 style="margin: 0 0 6px 0;">Decision & Scenario Simulator</h1>
+        <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">Model career pivot timing (VRS Age 50 Rule) and spouse NICU/childcare tradeoffs.</p>
+      </div>
+      <a href="index.html" class="nav-link">&larr; Return to Live Dashboard</a>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('career')">Career Pivot: 25 Yrs vs Age 50/55/60</button>
+      <button class="tab-btn" onclick="switchTab('spouse')">Spouse NICU & Childcare Simulation</button>
+    </div>
+
+    <!-- TAB 1: CAREER PIVOT SIMULATOR -->
+    <div id="career-tab">
+      <div class="grid" style="grid-template-columns: 360px 1fr;">
+        <!-- Controls -->
+        <div class="card">
+          <h3 style="margin-top: 0;">Simulation Dials</h3>
+          <div class="control-group">
+            <div class="slider-row"><label>Pivot Job #2 Salary (% of Loudoun AFC)</label><span class="val-disp" id="disp-job2-pct">90%</span></div>
+            <input type="range" id="input-job2-pct" min="70" max="110" value="90" oninput="updateCareerSim()" />
+          </div>
+          <div class="control-group">
+            <div class="slider-row"><label>Loudoun Salary Growth (COLA + Steps)</label><span class="val-disp" id="disp-sal-growth">2.5%</span></div>
+            <input type="range" id="input-sal-growth" min="1.5" max="4.5" step="0.5" value="2.5" oninput="updateCareerSim()" />
+          </div>
+          <div class="control-group">
+            <div class="slider-row"><label>Job #2 401(k) Match</label><span class="val-disp" id="disp-match">5%</span></div>
+            <input type="range" id="input-match" min="0" max="10" value="5" oninput="updateCareerSim()" />
+          </div>
+          <div style="background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.3); border-radius: 8px; padding: 12px; font-size: 0.8rem; color: #fb923c; margin-top: 16px;">
+            <strong>VRS Statutory Rule:</strong> Born Feb 1990 &rarr; 25 yrs service at Age 45 (2035). Pension cannot pay out until Age 50 (Feb 2040).
+          </div>
+        </div>
+
+        <!-- Career Visuals & Summary -->
+        <div class="card">
+          <div class="stat-label">Annual Gross Cash Flow Comparison (Salary + Pension Payout)</div>
+          <div class="chart-box"><canvas id="careerChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top: 0;">Scenario Comparison Summary</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th>Exit Age (Year)</th>
+              <th>Service Credit</th>
+              <th>Monthly Pension (w/ Supp)</th>
+              <th>Ages 45–50 Annual Income</th>
+              <th>Ages 50–60 Annual Income</th>
+            </tr>
+          </thead>
+          <tbody id="career-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: SPOUSE NICU & CHILDCARE SIMULATOR -->
+    <div id="spouse-tab" style="display: none;">
+      <div class="grid" style="grid-template-columns: 360px 1fr;">
+        <!-- Controls -->
+        <div class="card">
+          <h3 style="margin-top: 0;">Childcare & Work Parameters</h3>
+          <div class="control-group">
+            <div class="slider-row"><label>Spouse Hourly Rate</label><span class="val-disp" id="disp-hourly">$60 / hr</span></div>
+            <input type="range" id="input-hourly" min="45" max="80" value="60" oninput="updateSpouseSim()" />
+          </div>
+          <div class="control-group">
+            <div class="slider-row"><label>Infant Daycare (Weekly Cost)</label><span class="val-disp" id="disp-infant">$380 / wk</span></div>
+            <input type="range" id="input-infant" min="250" max="500" step="10" value="380" oninput="updateSpouseSim()" />
+          </div>
+          <div class="control-group">
+            <div class="slider-row"><label>Toddler Wrap-Around (Weekly Cost)</label><span class="val-disp" id="disp-toddler">$150 / wk</span></div>
+            <input type="range" id="input-toddler" min="0" max="300" step="10" value="150" oninput="updateSpouseSim()" />
+          </div>
+          <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 12px; font-size: 0.8rem; color: #7dd3fc; margin-top: 16px;">
+            <strong>Tax Drag:</strong> Household bracket is 24% Fed + 5.75% VA + 7.65% FICA = <strong>37.4%</strong>. Both must work to claim $7,500 DCFSA.
+          </div>
+        </div>
+
+        <!-- Net Take-Home Breakdown Chart -->
+        <div class="card">
+          <div class="stat-label">Net Family Value: Gross Earnings vs Childcare & Taxes</div>
+          <div class="chart-box"><canvas id="spouseChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top: 0;">Bottom-Line Financial Tradeoffs</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Work Model</th>
+              <th>Gross Income</th>
+              <th>Taxes Paid (37.4%)</th>
+              <th>Net Take-Home</th>
+              <th>DCFSA Benefit</th>
+              <th>Childcare Cost</th>
+              <th>Net Family Cash Flow</th>
+            </tr>
+          </thead>
+          <tbody id="spouse-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const fmt = (v) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
+
+    function switchTab(tab) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      if (tab === "career") {
+        document.querySelectorAll(".tab-btn")[0].classList.add("active");
+        document.getElementById("career-tab").style.display = "block";
+        document.getElementById("spouse-tab").style.display = "none";
+      } else {
+        document.querySelectorAll(".tab-btn")[1].classList.add("active");
+        document.getElementById("career-tab").style.display = "none";
+        document.getElementById("spouse-tab").style.display = "block";
+      }
+    }
+
+    // ---------------- CAREER SIMULATOR LOGIC ----------------
+    let careerChart;
+    function updateCareerSim() {
+      const job2Pct = parseFloat(document.getElementById("input-job2-pct").value) / 100;
+      const salGrowth = parseFloat(document.getElementById("input-sal-growth").value) / 100;
+      const match = parseFloat(document.getElementById("input-match").value) / 100;
+
+      document.getElementById("disp-job2-pct").innerText = `${(job2Pct * 100).toFixed(0)}%`;
+      document.getElementById("disp-sal-growth").innerText = `${(salGrowth * 100).toFixed(1)}%`;
+      document.getElementById("disp-match").innerText = `${(match * 100).toFixed(0)}%`;
+
+      const BASE = 205004.80;
+      const getSal = (yr) => BASE * Math.pow(1 + salGrowth, yr - 2026);
+      const getAFC = (yr) => {
+        let s = 0;
+        for (let i = 0; i < 5; i++) s += getSal(yr - i);
+        return s / 5;
+      };
+
+      // Scenarios:
+      // A: Leave 2035 (Age 45, 25 yrs) -> Defer to 50
+      const afc35 = getAFC(2035);
+      const pen35 = ((25 * 0.0185 * afc35) / 12) + 1650;
+      const job2Sal = afc35 * job2Pct;
+
+      // B: Stay to 2040 (Age 50, 30 yrs)
+      const afc40 = getAFC(2040);
+      const pen40 = ((29.83 * 0.0185 * afc40) / 12) + 1650;
+
+      // C: Stay to 2045 (Age 55, 35 yrs)
+      const afc45 = getAFC(2045);
+      const pen45 = ((34.83 * 0.0185 * afc45) / 12) + 1650;
+
+      // D: Stay to 2050 (Age 60, 40 yrs)
+      const afc50 = getAFC(2050);
+      const pen50 = ((39.83 * 0.0185 * afc50) / 12) + 1650;
+
+      // Chart Data: Ages 44 to 62
+      const ages = [44, 45, 46, 47, 48, 49, 50, 52, 54, 56, 58, 60, 62];
+      const curvePivot45 = [];
+      const curveStay50 = [];
+      const curveStay55 = [];
+
+      ages.forEach(age => {
+        const yr = 1990 + age;
+        // Curve A: Pivot 45
+        if (age < 45) curvePivot45.push(getSal(yr));
+        else if (age < 50) curvePivot45.push(job2Sal);
+        else curvePivot45.push(job2Sal + (pen35 * 12));
+
+        // Curve B: Stay 50
+        if (age < 50) curveStay50.push(getSal(yr));
+        else curveStay50.push((afc40 * job2Pct) + (pen40 * 12));
+
+        // Curve C: Stay 55
+        if (age < 55) curveStay55.push(getSal(yr));
+        else curveStay55.push(pen45 * 12);
+      });
+
+      if (careerChart) careerChart.destroy();
+      careerChart = new Chart(document.getElementById("careerChart"), {
+        type: "line",
+        data: {
+          labels: ages.map(a => `Age ${a}`),
+          datasets: [
+            { label: "Pivot at 25 Yrs (Age 45)", data: curvePivot45, borderColor: "#38bdf8", borderWidth: 3, tension: 0.2 },
+            { label: "Stay to Age 50 (30 Yrs)", data: curveStay50, borderColor: "#4ade80", borderWidth: 3, tension: 0.2 },
+            { label: "Stay to Age 55 (35 Yrs)", data: curveStay55, borderColor: "#f97316", borderDash: [4, 4], borderWidth: 2, tension: 0.2 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: { y: { ticks: { callback: (v) => "$" + (v / 1000).toFixed(0) + "k" }, grid: { color: "#1f2937" } }, x: { grid: { display: false } } },
+          plugins: { tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.raw)}` } } }
+        }
+      });
+
+      // Table Fill
+      document.getElementById("career-table-body").innerHTML = `
+        <tr>
+          <td style="color: #38bdf8; font-weight: 600;">Option A: Pivot at 25 Yrs</td>
+          <td>Age 45 (2035)</td>
+          <td>25.0 Yrs</td>
+          <td>${fmt(pen35)} / mo</td>
+          <td>${fmt(job2Sal)} / yr <span style="color: #f87171;">($0 Pension)</span></td>
+          <td style="color: #4ade80; font-weight: 700;">${fmt(job2Sal + pen35 * 12)} / yr</td>
+        </tr>
+        <tr>
+          <td style="color: #4ade80; font-weight: 600;">Option B: Stay to Age 50</td>
+          <td>Age 50 (2040)</td>
+          <td>29.8 Yrs</td>
+          <td>${fmt(pen40)} / mo</td>
+          <td>${fmt(getSal(2037))} / yr (Loudoun)</td>
+          <td style="color: #4ade80; font-weight: 700;">${fmt((afc40 * job2Pct) + pen40 * 12)} / yr</td>
+        </tr>
+        <tr>
+          <td style="color: #f97316; font-weight: 600;">Option C: Stay to Age 55</td>
+          <td>Age 55 (2045)</td>
+          <td>34.8 Yrs</td>
+          <td>${fmt(pen45)} / mo</td>
+          <td>${fmt(getSal(2037))} / yr (Loudoun)</td>
+          <td>${fmt(getSal(2042))} / yr (Loudoun)</td>
+        </tr>
+        <tr>
+          <td style="color: #a78bfa; font-weight: 600;">Option D: Stay to Age 60</td>
+          <td>Age 60 (2050)</td>
+          <td>39.8 Yrs</td>
+          <td>${fmt(pen50)} / mo</td>
+          <td>${fmt(getSal(2037))} / yr (Loudoun)</td>
+          <td>${fmt(getSal(2042))} / yr (Loudoun)</td>
+        </tr>
+      `;
+    }
+
+    // ---------------- SPOUSE SIMULATOR LOGIC ----------------
+    let spouseChart;
+    function updateSpouseSim() {
+      const hourly = parseFloat(document.getElementById("input-hourly").value);
+      const infantWk = parseFloat(document.getElementById("input-infant").value);
+      const toddlerWk = parseFloat(document.getElementById("input-toddler").value);
+
+      document.getElementById("disp-hourly").innerText = `$${hourly} / hr`;
+      document.getElementById("disp-infant").innerText = `$${infantWk} / wk`;
+      document.getElementById("disp-toddler").innerText = `$${toddlerWk} / wk`;
+
+      const TAX_RATE = 0.374; // 24% Fed + 5.75% VA + 7.65% FICA
+      const DCFSA_SAVINGS = 1000 + (7500 * (0.24 + 0.0575)); // $3,231 tax + match
+
+      // 1. Full Stop
+      const gross0 = 0;
+      const net0 = 0;
+      const care0 = 0;
+      const bottom0 = 0;
+
+      // 2. PRN (1 day = 12 hrs/wk = 624 hrs/yr)
+      const grossPRN = hourly * 12 * 52;
+      const netPRN = grossPRN * (1 - TAX_RATE);
+      // Coordinated with firefighter schedule = minimal to $0 daycare
+      const carePRN = 0;
+      const bottomPRN = netPRN + DCFSA_SAVINGS - carePRN;
+
+      // 3. Current (2 days = 24 hrs/wk = 1248 hrs/yr)
+      const gross2Day = hourly * 24 * 52;
+      const net2Day = gross2Day * (1 - TAX_RATE);
+      const care2Day = (infantWk * 50) + (toddlerWk * 50);
+      const bottom2Day = net2Day + DCFSA_SAVINGS - care2Day;
+
+      if (spouseChart) spouseChart.destroy();
+      spouseChart = new Chart(document.getElementById("spouseChart"), {
+        type: "bar",
+        data: {
+          labels: ["Stop Working", "PRN (1 Day/Wk)", "Current (2 Days/Wk)"],
+          datasets: [
+            { label: "Net Family Bottom Line", data: [bottom0, bottomPRN, bottom2Day], backgroundColor: "#4ade80", order: 1 },
+            { label: "Taxes Paid (37.4%)", data: [0, grossPRN * TAX_RATE, gross2Day * TAX_RATE], backgroundColor: "#f87171", order: 2 },
+            { label: "Childcare Cost", data: [0, carePRN, care2Day], backgroundColor: "#fb923c", order: 3 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: { y: { ticks: { callback: (v) => "$" + (v / 1000).toFixed(0) + "k" }, grid: { color: "#1f2937" } }, x: { grid: { display: false } } },
+          plugins: { tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.raw)}` } } }
+        }
+      });
+
+      document.getElementById("spouse-table-body").innerHTML = `
+        <tr>
+          <td style="font-weight: 600;">Option 1: Stop Working</td>
+          <td>$0</td>
+          <td>$0</td>
+          <td>$0</td>
+          <td style="color: #f87171;">$0 (Lost)</td>
+          <td>$0</td>
+          <td style="font-weight: 700;">$0</td>
+        </tr>
+        <tr>
+          <td style="color: #4ade80; font-weight: 600;">Option 2: PRN (1 Day/Wk)</td>
+          <td>${fmt(grossPRN)}</td>
+          <td>-${fmt(grossPRN * TAX_RATE)}</td>
+          <td>${fmt(netPRN)}</td>
+          <td style="color: #38bdf8;">+${fmt(DCFSA_SAVINGS)}</td>
+          <td>${fmt(carePRN)}</td>
+          <td style="color: #4ade80; font-weight: 700; font-size: 1.05rem;">${fmt(bottomPRN)}</td>
+        </tr>
+        <tr>
+          <td style="color: #38bdf8; font-weight: 600;">Option 3: Current (2 Days/Wk)</td>
+          <td>${fmt(gross2Day)}</td>
+          <td>-${fmt(gross2Day * TAX_RATE)}</td>
+          <td>${fmt(net2Day)}</td>
+          <td style="color: #38bdf8;">+${fmt(DCFSA_SAVINGS)}</td>
+          <td style="color: #f87171;">-${fmt(care2Day)}</td>
+          <td style="color: #fbbf24; font-weight: 700; font-size: 1.05rem;">${fmt(bottom2Day)}</td>
+        </tr>
+      `;
+    }
+
+    // Initialize both simulators
+    updateCareerSim();
+    updateSpouseSim();
+  </script>
+</body>
+</html>
