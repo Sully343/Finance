@@ -15,12 +15,12 @@
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 24px; background: var(--bg); color: var(--text); }
     .container { max-width: 1200px; margin: 0 auto; }
     .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
     .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-    .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .stat-val { font-size: 1.6rem; font-weight: 700; margin-top: 6px; color: var(--accent); }
+    .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-val { font-size: 1.5rem; font-weight: 700; margin-top: 6px; color: var(--accent); }
     .fire-text { color: var(--fire); }
-    .chart-box { position: relative; height: 380px; }
+    .chart-box { position: relative; height: 360px; }
     input, button { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.95rem; }
     button { background: #2563eb; cursor: pointer; border: none; font-weight: 600; }
     button:hover { background: #1d4ed8; }
@@ -54,43 +54,54 @@
         <button onclick="handleLogout()" style="background: #374151;">Sign Out</button>
       </div>
 
-      <!-- KPI Metrics -->
+      <!-- 6-Metric KPI Summary Row -->
       <div class="grid">
         <div class="card">
-          <div class="stat-label">Monarch Net Worth (Liquid + Real Estate)</div>
+          <div class="stat-label">Monarch Net Worth</div>
           <div class="stat-val" id="total-liquid">$0</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Liquid + Real Estate</div>
         </div>
         <div class="card">
-          <div class="stat-label">Current Accrued Pension</div>
+          <div class="stat-label">Accrued Pension</div>
           <div class="stat-val fire-text" id="current-pension">$0 / mo</div>
           <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;" id="service-years">0.0 Yrs Service</div>
         </div>
         <div class="card">
-          <div class="stat-label">20-Year Mark (April 2030)</div>
+          <div class="stat-label">20-Year (Apr 2030)</div>
           <div class="stat-val" style="color: #fbbf24;" id="pension-20yr">$0 / mo</div>
-          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Includes Hazardous Supplement</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">+$1,650/mo Supplement</div>
         </div>
         <div class="card">
-          <div class="stat-label">25-Year Full Ret. (April 2035)</div>
+          <div class="stat-label">25-Year Full Ret.</div>
           <div class="stat-val" style="color: #4ade80;" id="pension-25yr">$0 / mo</div>
-          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Unreduced Lifetime Benefit</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Unreduced Benefit</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Monthly Burn Rate</div>
+          <div class="stat-val" style="color: #f87171;" id="monthly-burn">$0 / mo</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Trailing 12-Mo Core Avg</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Pension Coverage</div>
+          <div class="stat-val" style="color: #38bdf8;" id="pension-coverage">0%</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">20-Yr Benefit / Burn Rate</div>
         </div>
       </div>
 
-      <!-- Chart 1: Quarterly Stacked Balance Sheet -->
+      <!-- Tactical Quarterly Balance Sheet -->
       <div class="grid" style="grid-template-columns: 1fr;">
         <div class="card">
           <div class="stat-label" style="margin-bottom: 4px;">Tactical Balance Sheet (Quarterly Stacked Breakdown)</div>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 16px 0;">Positive assets stack upward; liabilities/mortgages hang below zero. Trendline tracks true quarterly net worth.</p>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 16px 0;">Assets stack upward; mortgages/liabilities hang below zero. Trendline tracks true quarterly net worth.</p>
           <div class="chart-box"><canvas id="quarterlyChart"></canvas></div>
         </div>
       </div>
 
-      <!-- Chart 2: Macro Projections Horizon -->
+      <!-- Macro Projections Horizon -->
       <div class="grid" style="grid-template-columns: 1fr;">
         <div class="card">
-          <div class="stat-label" style="margin-bottom: 4px;">Long-Term Wealth Horizon (Annual Actuals + 10-Year Forward Projections)</div>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 16px 0;">Includes $23,500/yr annual 457(b) cash injections + 6% compounding + 2% AFC compounding with 2030 supplement.</p>
+          <div class="stat-label" style="margin-bottom: 4px;">Long-Term Wealth Horizon (Actuals + Dynamic 10-Year Projections)</div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 16px 0;" id="projection-subtitle">Forward model uses 6% compounding plus dynamic trailing annual surplus.</p>
           <div class="chart-box"><canvas id="yearlyChart"></canvas></div>
         </div>
       </div>
@@ -104,14 +115,12 @@
 
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- Core Parameters ---
     const HIRE_DATE = new Date("2010-04-10");
     const MULTIPLIER = 0.0185;
     const BASE_SALARY_2026 = 205004.80;
     const SALARY_GROWTH_RATE = 0.02;
     const HAZARDOUS_SUPPLEMENT = 1650.00;
     const LIQUID_GROWTH_RATE = 0.06;
-    const ANNUAL_457_CONTRIBUTION = 23500.00;
 
     function calculateAFC(targetYear) {
       let sum = 0;
@@ -130,17 +139,10 @@
     }
 
     function categorizeAccount(type, name) {
-      const t = (type || "").toLowerCase();
-      const n = (name || "").toLowerCase();
-      if (t.includes("loan") || t.includes("mortgage") || t.includes("credit") || t.includes("debt") || n.includes("mortgage")) {
-        return "Liabilities";
-      }
-      if (t.includes("real_estate") || t.includes("property") || t.includes("asset") || n.includes("zillow") || n.includes("home")) {
-        return "Real Estate";
-      }
-      if (t.includes("invest") || t.includes("brokerage") || t.includes("retirement") || n.includes("457") || n.includes("ira") || n.includes("vanguard")) {
-        return "Investments & 457";
-      }
+      const t = (type || "").toLowerCase(), n = (name || "").toLowerCase();
+      if (t.includes("loan") || t.includes("mortgage") || t.includes("credit") || t.includes("debt") || n.includes("mortgage")) return "Liabilities";
+      if (t.includes("real_estate") || t.includes("property") || t.includes("asset") || n.includes("zillow") || n.includes("home")) return "Real Estate";
+      if (t.includes("invest") || t.includes("brokerage") || t.includes("retirement") || n.includes("457") || n.includes("ira") || n.includes("edge")) return "Investments & 457";
       return "Cash & Liquid";
     }
 
@@ -158,11 +160,17 @@
     let quarterlyChartInstance, yearlyChartInstance;
 
     async function renderDashboard() {
-      const { data: allData } = await client.from("account_snapshots").select("date, account_name, account_type, current_balance").order("date", { ascending: true });
+      const [snapshotsRes, cashflowRes] = await Promise.all([
+        client.from("account_snapshots").select("date, account_name, account_type, current_balance").order("date", { ascending: true }),
+        client.from("monthly_cashflow").select("month, income, expenses, savings").order("month", { ascending: true })
+      ]);
 
-      // Determine true latest snapshot per account
+      const allData = snapshotsRes.data || [];
+      const cashflowData = cashflowRes.data || [];
+
+      // Latest known balance per account
       const latestPerAccount = {};
-      (allData || []).forEach(row => {
+      allData.forEach(row => {
         const acc = row.account_name;
         if (!latestPerAccount[acc] || row.date >= latestPerAccount[acc].date) {
           latestPerAccount[acc] = row;
@@ -170,9 +178,7 @@
       });
 
       let currentNetWorth = 0;
-      Object.values(latestPerAccount).forEach(row => {
-        currentNetWorth += (parseFloat(row.current_balance) || 0);
-      });
+      Object.values(latestPerAccount).forEach(r => currentNetWorth += (parseFloat(r.current_balance) || 0));
 
       const now = new Date();
       const currentYear = now.getFullYear();
@@ -183,40 +189,37 @@
       const monthly20yr = ((20 * MULTIPLIER * calculateAFC(2030)) / 12) + HAZARDOUS_SUPPLEMENT;
       const monthly25yr = ((25 * MULTIPLIER * calculateAFC(2035)) / 12) + HAZARDOUS_SUPPLEMENT;
 
+      // Trailing 12-month metrics
+      const trailing12 = cashflowData.slice(-12);
+      const avgMonthlyExpenses = trailing12.length ? trailing12.reduce((s, r) => s + parseFloat(r.expenses), 0) / trailing12.length : 0;
+      const actualAnnualSavings = trailing12.length ? trailing12.reduce((s, r) => s + parseFloat(r.savings), 0) : 23500;
+      const coverageRatio = avgMonthlyExpenses > 0 ? (monthly20yr / avgMonthlyExpenses) * 100 : 0;
+
       document.getElementById("total-liquid").innerText = fmt(currentNetWorth);
       document.getElementById("current-pension").innerText = `${fmt(currentMonthly)} / mo`;
-      document.getElementById("service-years").innerText = `${currentServiceYears.toFixed(1)} Yrs Service Credit`;
+      document.getElementById("service-years").innerText = `${currentServiceYears.toFixed(1)} Yrs Service`;
       document.getElementById("pension-20yr").innerText = `${fmt(monthly20yr)} / mo`;
       document.getElementById("pension-25yr").innerText = `${fmt(monthly25yr)} / mo`;
+      document.getElementById("monthly-burn").innerText = avgMonthlyExpenses > 0 ? `${fmt(avgMonthlyExpenses)} / mo` : "$0 / mo";
+      document.getElementById("pension-coverage").innerText = coverageRatio > 0 ? `${coverageRatio.toFixed(0)}%` : "N/A";
+      document.getElementById("projection-subtitle").innerText = `Forward model uses 6% compounding + dynamic ${fmt(actualAnnualSavings)}/yr actual net annual surplus.`;
 
       Chart.defaults.color = "#9ca3af";
 
-      // -------------------------------------------------------------
-      // 1. CHART: TACTICAL QUARTERLY STACKED BAR WITH OVERLAY LINE
-      // -------------------------------------------------------------
+      // 1. Tactical Quarterly Stacked Bar + Line
       const quarters = [];
       for (let y = 2024; y <= currentYear; y++) {
-        quarters.push({ label: `${y} Q1`, end: `${y}-03-31` });
-        quarters.push({ label: `${y} Q2`, end: `${y}-06-30` });
-        quarters.push({ label: `${y} Q3`, end: `${y}-09-30` });
-        quarters.push({ label: `${y} Q4`, end: `${y}-12-31` });
+        quarters.push({ label: `${y} Q1`, end: `${y}-03-31` }, { label: `${y} Q2`, end: `${y}-06-30` }, { label: `${y} Q3`, end: `${y}-09-30` }, { label: `${y} Q4`, end: `${y}-12-31` });
       }
 
-      const qLabels = [];
-      const stackCash = [];
-      const stackInvestments = [];
-      const stackRealEstate = [];
-      const stackLiabilities = [];
-      const qNetWorthLine = [];
+      const qLabels = [], stackCash = [], stackInvestments = [], stackRealEstate = [], stackLiabilities = [], qNetWorthLine = [];
 
       quarters.forEach(q => {
         if (q.end <= now.toISOString().split("T")[0]) {
           const accsAtDate = {};
-          (allData || []).forEach(row => {
-            if (row.date <= q.end) {
-              if (!accsAtDate[row.account_name] || row.date > accsAtDate[row.account_name].date) {
-                accsAtDate[row.account_name] = row;
-              }
+          allData.forEach(row => {
+            if (row.date <= q.end && (!accsAtDate[row.account_name] || row.date > accsAtDate[row.account_name].date)) {
+              accsAtDate[row.account_name] = row;
             }
           });
 
@@ -226,16 +229,10 @@
               const val = parseFloat(r.current_balance) || 0;
               const cat = categorizeAccount(r.account_type, r.account_name);
               nw += val;
-
-              if (cat === "Liabilities") {
-                liab += (val > 0 ? -val : val); // Ensure debt displays below 0
-              } else if (cat === "Real Estate") {
-                re += val;
-              } else if (cat === "Investments & 457") {
-                invest += val;
-              } else {
-                cash += val;
-              }
+              if (cat === "Liabilities") liab += (val > 0 ? -val : val);
+              else if (cat === "Real Estate") re += val;
+              else if (cat === "Investments & 457") invest += val;
+              else cash += val;
             });
 
             qLabels.push(q.label);
@@ -253,79 +250,29 @@
         data: {
           labels: qLabels,
           datasets: [
-            {
-              type: "line",
-              label: "Actual Net Worth",
-              data: qNetWorthLine,
-              borderColor: "#38bdf8",
-              backgroundColor: "#38bdf8",
-              borderWidth: 3,
-              tension: 0.2,
-              order: 1
-            },
-            {
-              type: "bar",
-              label: "Real Estate (Zillow)",
-              data: stackRealEstate,
-              backgroundColor: "#a78bfa",
-              stack: "balance",
-              order: 2
-            },
-            {
-              type: "bar",
-              label: "Investments & 457(b)",
-              data: stackInvestments,
-              backgroundColor: "#34d399",
-              stack: "balance",
-              order: 3
-            },
-            {
-              type: "bar",
-              label: "Cash & Liquid",
-              data: stackCash,
-              backgroundColor: "#60a5fa",
-              stack: "balance",
-              order: 4
-            },
-            {
-              type: "bar",
-              label: "Mortgage & Liabilities",
-              data: stackLiabilities,
-              backgroundColor: "#f87171",
-              stack: "balance",
-              order: 5
-            }
+            { type: "line", label: "Actual Net Worth", data: qNetWorthLine, borderColor: "#38bdf8", borderWidth: 3, tension: 0.2, order: 1 },
+            { type: "bar", label: "Real Estate (Zillow)", data: stackRealEstate, backgroundColor: "#a78bfa", stack: "balance", order: 2 },
+            { type: "bar", label: "Investments & 457(b)", data: stackInvestments, backgroundColor: "#34d399", stack: "balance", order: 3 },
+            { type: "bar", label: "Cash & Liquid", data: stackCash, backgroundColor: "#60a5fa", stack: "balance", order: 4 },
+            { type: "bar", label: "Mortgage & Liabilities", data: stackLiabilities, backgroundColor: "#f87171", stack: "balance", order: 5 }
           ]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: { stacked: true, grid: { display: false } },
-            y: { stacked: true, grid: { color: "#1f2937" }, ticks: { callback: (v) => "$" + (v / 1000).toFixed(0) + "k" } }
-          },
-          plugins: {
-            tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.raw)}` } }
-          }
+          responsive: true, maintainAspectRatio: false,
+          scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, grid: { color: "#1f2937" }, ticks: { callback: (v) => "$" + (v / 1000).toFixed(0) + "k" } } },
+          plugins: { tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.raw)}` } } }
         }
       });
 
-      // -------------------------------------------------------------
-      // 2. CHART: MACRO ANNUAL ACTUALS + FORWARD PROJECTIONS TO 2036
-      // -------------------------------------------------------------
+      // 2. Macro Annual Projections to 2036
       const yLabels = ["2023", "2024", "2025", "2026 (Now)"];
-      const yLiquid = [];
-      const yPension = [];
-      const yCombined = [];
+      const yLiquid = [], yPension = [], yCombined = [];
 
-      // Calculate Historical Years (as of Dec 31 each year)
       [2023, 2024, 2025].forEach(yr => {
         const dateStr = `${yr}-12-31`;
         const accs = {};
-        (allData || []).forEach(r => {
-          if (r.date <= dateStr) {
-            if (!accs[r.account_name] || r.date > accs[r.account_name].date) accs[r.account_name] = r;
-          }
+        allData.forEach(r => {
+          if (r.date <= dateStr && (!accs[r.account_name] || r.date > accs[r.account_name].date)) accs[r.account_name] = r;
         });
         const liq = Object.values(accs).reduce((sum, r) => sum + (parseFloat(r.current_balance) || 0), 0);
         const pen = calculatePensionNPV(new Date(dateStr));
@@ -334,12 +281,10 @@
         yCombined.push(liq + pen);
       });
 
-      // Present Point
       yLiquid.push(currentNetWorth);
       yPension.push(currentNPV);
       yCombined.push(currentNetWorth + currentNPV);
 
-      // Forward Projections: Compounding Assets + $23.5k Annual 457 Injections
       let runningLiquid = currentNetWorth;
       const futureYears = [2027, 2028, 2029, 2030, 2031, 2033, 2035, 2036];
       let lastYear = currentYear;
@@ -347,11 +292,11 @@
       futureYears.forEach(futYear => {
         const span = futYear - lastYear;
         for (let i = 0; i < span; i++) {
-          runningLiquid = (runningLiquid + ANNUAL_457_CONTRIBUTION) * (1 + LIQUID_GROWTH_RATE);
+          runningLiquid = (runningLiquid + actualAnnualSavings) * (1 + LIQUID_GROWTH_RATE);
         }
         lastYear = futYear;
 
-        const penNPV = calculatePensionNPV(new Date(futYear, 3, 10)); // Evaluated at April hire month
+        const penNPV = calculatePensionNPV(new Date(futYear, 3, 10));
         yLabels.push(`${futYear}${futYear === 2030 ? " (20-Yr Supp)" : futYear === 2035 ? " (25-Yr Ret)" : ""}`);
         yLiquid.push(runningLiquid);
         yPension.push(penNPV);
@@ -364,41 +309,15 @@
         data: {
           labels: yLabels,
           datasets: [
-            {
-              label: "Combined Balance Sheet (+ Pension NPV)",
-              data: yCombined,
-              borderColor: "#4ade80",
-              backgroundColor: "rgba(74, 222, 128, 0.08)",
-              fill: true,
-              tension: 0.3,
-              borderWidth: 3
-            },
-            {
-              label: "Monarch Assets (Liquid + Zillow + 457 Savings)",
-              data: yLiquid,
-              borderColor: "#38bdf8",
-              tension: 0.3,
-              borderWidth: 2
-            },
-            {
-              label: "Capitalized Pension NPV",
-              data: yPension,
-              borderColor: "#f97316",
-              borderDash: [5, 5],
-              tension: 0.3
-            }
+            { label: "Combined Balance Sheet (+ Pension NPV)", data: yCombined, borderColor: "#4ade80", backgroundColor: "rgba(74, 222, 128, 0.08)", fill: true, tension: 0.3, borderWidth: 3 },
+            { label: "Monarch Assets (Liquid + Zillow + Net Savings)", data: yLiquid, borderColor: "#38bdf8", tension: 0.3, borderWidth: 2 },
+            { label: "Capitalized Pension NPV", data: yPension, borderColor: "#f97316", borderDash: [5, 5], tension: 0.3 }
           ]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.raw)}` } }
-          },
-          scales: {
-            x: { grid: { display: false } },
-            y: { grid: { color: "#1f2937" }, ticks: { callback: (v) => "$" + (v / 1000).toFixed(0) + "k" } }
-          }
+          responsive: true, maintainAspectRatio: false,
+          plugins: { tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.raw)}` } } },
+          scales: { x: { grid: { display: false } }, y: { grid: { color: "#1f2937" }, ticks: { callback: (v) => "$" + (v / 1000).toFixed(0) + "k" } } }
         }
       });
     }
